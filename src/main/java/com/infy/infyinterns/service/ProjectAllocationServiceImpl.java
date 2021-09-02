@@ -29,9 +29,11 @@ public class ProjectAllocationServiceImpl implements ProjectAllocationService {
 	public Integer allocateProject(ProjectDTO project) throws InfyInternException {
 		Optional<Mentor> optionalMentor=mentorRepository.findById(project.getMentorDTO().getMentorId());
 		Mentor mentor=optionalMentor.orElseThrow(()->new InfyInternException("Service.MENTOR_NOT_FOUND"));
+		
 		if(mentor.getNumberOfProjectsMentored()>=3) {
 			throw new InfyInternException("Service.CANNOT_ALLOCATE_PROJECT");
 		}
+		
 		Project projectEntity=new Project();
 		projectEntity.setProjectName(project.getProjectName());
 		projectEntity.setIdeaOwner(project.getIdeaOwner());
@@ -39,6 +41,7 @@ public class ProjectAllocationServiceImpl implements ProjectAllocationService {
 		projectEntity.setMentor(mentor);
 		mentor.setNumberOfProjectsMentored(mentor.getNumberOfProjectsMentored()+1);
 		projectEntity=projectRepository.save(projectEntity);
+		
 		return projectEntity.getProjectId();
 	}
 
@@ -46,9 +49,11 @@ public class ProjectAllocationServiceImpl implements ProjectAllocationService {
 	@Override
 	public List<MentorDTO> getMentors(Integer numberOfProjectsMentored) throws InfyInternException {
 		List<Mentor> mentorList=mentorRepository.findByNumberOfProjectsMentored(numberOfProjectsMentored);
+		
 		if(mentorList.isEmpty()) {
 			throw new InfyInternException("Service.MENTOR_NOT_FOUND");
 		}
+		
 		return mentorList.stream()
 				.map(e->new MentorDTO(e.getMentorId(), e.getMentorName(), e.getNumberOfProjectsMentored()))
 				.collect(Collectors.toList());
@@ -59,14 +64,15 @@ public class ProjectAllocationServiceImpl implements ProjectAllocationService {
 	public void updateProjectMentor(Integer projectId, Integer mentorId) throws InfyInternException {
 		Optional<Mentor> mentorOptional=mentorRepository.findById(mentorId);
 		Mentor mentor=mentorOptional.orElseThrow(()->new InfyInternException("Service.MENTOR_NOT_FOUND"));
+		
 		if(mentor.getNumberOfProjectsMentored()>=3) {
 			throw new InfyInternException("Service.CANNOT_ALLOCATE_PROJECT");
 		}
+		
 		Optional<Project> projectOptional=projectRepository.findById(projectId);
 		Project project=projectOptional.orElseThrow(()->new InfyInternException("Service.PROJECT_NOT_FOUND"));
 		project.setMentor(mentor);
 		mentor.setNumberOfProjectsMentored(mentor.getNumberOfProjectsMentored()+1);
-		
 	}
 
 	@Override
@@ -74,6 +80,7 @@ public class ProjectAllocationServiceImpl implements ProjectAllocationService {
 		Optional<Project> projectOptional=projectRepository.findById(projectId);
 		Project project=projectOptional.orElseThrow(()->new InfyInternException("Service.PROJECT_NOT_FOUND"));
 		Mentor mentor=project.getMentor();
+		
 		if(mentor!=null) {
 			project.setMentor(null);
 			mentor.setNumberOfProjectsMentored(mentor.getNumberOfProjectsMentored()-1);
